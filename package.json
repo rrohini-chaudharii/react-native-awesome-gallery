@@ -65,7 +65,7 @@
     "prettier": "^2.0.5",
     "react": "16.13.1",
     "react-native": "0.63.4",
-    "react-native-builder-bob": "^",
+    "react-native-builder-bob": "^0.40.13",
     "react-native-gesture-handler": "2.3.0",
     "react-native-reanimated": "^4.0.2",
     "release-it": "^14.2.2",
