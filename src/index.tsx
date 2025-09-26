@@ -13,7 +13,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
