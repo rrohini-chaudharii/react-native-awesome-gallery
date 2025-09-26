@@ -5,14 +5,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   I18nManager,
   Image,
   StyleSheet,
   useWindowDimensions,
-  ViewStyle,
 } from 'react-native';
 import Animated, {
+  useSharedValue,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -23,6 +24,7 @@ import Animated, {
   withSpring,
   cancelAnimation,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import {
   Gesture,
   GestureDetector,
