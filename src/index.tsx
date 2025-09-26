@@ -108,8 +108,8 @@ type Props<T> = EventsCallbacks & {
   index: number;
   isFirst: boolean;
   isLast: boolean;
-  translateX: Animated.SharedValue<number>;
-  currentIndex: Animated.SharedValue<number>;
+  translateX: SharedValue<number>;
+  currentIndex: SharedValue<number>;
   renderItem: RenderItem<T>;
   width: number;
   height: number;
@@ -197,10 +197,10 @@ const ResizableImage = React.memo(
     const originalLayout = useVector(width, 0);
     const layout = useVector(width, 0);
 
-    const isActive = useDerivedValue(() => currentIndex.value === index, [
-      currentIndex,
-      index,
-    ]);
+    const isActive = useDerivedValue(
+      () => currentIndex.value === index,
+      [currentIndex, index]
+    );
 
     useAnimatedReaction(
       () => {
@@ -719,7 +719,7 @@ const ResizableImage = React.memo(
               'worklet';
               isMoving.x.value = 0;
             }
-          );
+          ) as any;
         }
 
         if (onSwipeToClose && shouldClose.value) {
@@ -746,7 +746,7 @@ const ResizableImage = React.memo(
               'worklet';
               isMoving.y.value = 0;
             }
-          );
+          ) as any;
         } else {
           const diffY =
             translation.y.value + offset.y.value - (newHeight - height) / 2;
@@ -986,7 +986,7 @@ const GalleryComponent = <T extends any>(
   }));
 
   const changeIndex = useCallback(
-    (newIndex) => {
+    (newIndex: number) => {
       onIndexChange?.(newIndex);
       setIndex(newIndex);
     },
