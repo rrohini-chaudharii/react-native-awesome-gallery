@@ -1,9 +1,4 @@
-module.exports = function (api) {
-  api.cache(true);
-  return {
-    presets: ['@react-native/babel-preset', '@babel/preset-typescript'],
-    plugins: [
-      // Add any custom plugins here if needed
-    ],
-  };
+module.exports = {
+  presets: ['module:metro-react-native-babel-preset'],
+  plugins: ['react-native-worklets/plugin'],
 };
