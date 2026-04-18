@@ -5,12 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import type { ViewStyle } from 'react-native';
 import {
   I18nManager,
   Image,
   StyleSheet,
   useWindowDimensions,
+  ViewStyle,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -19,11 +19,11 @@ import Animated, {
   withTiming,
   withDecay,
   useAnimatedReaction,
-  runOnJS,
   withSpring,
   cancelAnimation,
+  type SharedValue,
 } from 'react-native-reanimated';
-import type { SharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import {
   Gesture,
   GestureDetector,
@@ -35,6 +35,9 @@ import {
   withRubberBandClamp,
   resizeImage,
 } from './utils';
+
+// Type workaround for Reanimated 4.x Animated.View children issue
+const AnimatedView = Animated.View as React.ComponentType<any>;
 
 const rtl = I18nManager.isRTL;
 
@@ -197,10 +200,10 @@ const ResizableImage = React.memo(
     const originalLayout = useVector(width, 0);
     const layout = useVector(width, 0);
 
-    const isActive = useDerivedValue(
-      () => currentIndex.value === index,
-      [currentIndex, index]
-    );
+    const isActive = useDerivedValue(() => currentIndex.value === index, [
+      currentIndex,
+      index,
+    ]);
 
     useAnimatedReaction(
       () => {
@@ -212,7 +215,7 @@ const ResizableImage = React.memo(
         }
 
         if (!onScaleChangeRange) {
-          runOnJS(onScaleChange)(scaleReaction);
+          scheduleOnRN(onScaleChange, scaleReaction);
           return;
         }
 
@@ -220,7 +223,7 @@ const ResizableImage = React.memo(
           scaleReaction > onScaleChangeRange.start &&
           scaleReaction < onScaleChangeRange.end
         ) {
-          runOnJS(onScaleChange)(scaleReaction);
+          scheduleOnRN(onScaleChange, scaleReaction);
         }
       }
     );
@@ -389,7 +392,7 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (onScaleStart) {
-          runOnJS(onScaleStart)(scale.value);
+          scheduleOnRN(onScaleStart, scale.value);
         }
 
         onStart();
@@ -428,7 +431,7 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (onScaleEnd) {
-          runOnJS(onScaleEnd)(scale.value);
+          scheduleOnRN(onScaleEnd, scale.value);
         }
         if (scale.value < 1) {
           resetValues();
@@ -552,7 +555,7 @@ const ResizableImage = React.memo(
         if (!isActive.value) return;
 
         if (onPanStart) {
-          runOnJS(onPanStart)();
+          scheduleOnRN(onPanStart);
         }
 
         onStart();
@@ -726,7 +729,7 @@ const ResizableImage = React.memo(
           offset.y.value = withDecay({
             velocity: velocityY,
           });
-          runOnJS(onSwipeToClose)();
+          scheduleOnRN(onSwipeToClose);
           return;
         }
 
@@ -775,7 +778,7 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (onTap && !interruptedScroll.value) {
-          runOnJS(onTap)();
+          scheduleOnRN(onTap);
         }
         interruptedScroll.value = false;
       });
@@ -791,12 +794,12 @@ const ResizableImage = React.memo(
         if (onTap && interruptedScroll.value) {
           interruptedScroll.value = false;
           if (onTap) {
-            runOnJS(onTap)();
+            scheduleOnRN(onTap);
           }
           return;
         }
         if (onDoubleTap) {
-          runOnJS(onDoubleTap)(scale.value === 1 ? doubleTapScale : 1);
+          scheduleOnRN(onDoubleTap, scale.value === 1 ? doubleTapScale : 1);
         }
 
         if (scale.value === 1) {
@@ -833,7 +836,7 @@ const ResizableImage = React.memo(
           return;
         }
         if (onLongPress) {
-          runOnJS(onLongPress)();
+          scheduleOnRN(onLongPress);
         }
       });
 
@@ -884,17 +887,19 @@ const ResizableImage = React.memo(
           Gesture.Exclusive(doubleTapGesture, tapGesture)
         )}
       >
-        <Animated.View
+        <AnimatedView
           style={[
             styles.itemContainer,
             { width, height },
             containerAnimatedStyle,
           ]}
         >
-          <Animated.View style={[{ width, height }, animatedStyle]}>
+          <AnimatedView 
+            style={[{ width, height }, animatedStyle]}
+          >
             {renderItem(itemProps)}
-          </Animated.View>
-        </Animated.View>
+          </AnimatedView>
+        </AnimatedView>
       </GestureDetector>
     );
   }
@@ -995,7 +1000,7 @@ const GalleryComponent = <T extends any>(
 
   useAnimatedReaction(
     () => currentIndex.value,
-    (newIndex) => runOnJS(changeIndex)(newIndex),
+    (newIndex) => scheduleOnRN(changeIndex, newIndex),
     [currentIndex, changeIndex]
   );
 
@@ -1019,7 +1024,7 @@ const GalleryComponent = <T extends any>(
       }
     },
     reset(animated = false) {
-      refs.current?.forEach((itemRef) => itemRef.reset(animated));
+      refs.current?.forEach((itemRef: ItemRef) => itemRef.reset(animated));
     },
   }));
 
@@ -1035,7 +1040,9 @@ const GalleryComponent = <T extends any>(
 
   return (
     <GestureHandlerRootView style={[styles.container, style]}>
-      <Animated.View style={[styles.rowContainer, animatedStyle]}>
+      <AnimatedView 
+        style={[styles.rowContainer, animatedStyle]}
+      >
         {data.map((item: any, i) => {
           const isFirst = i === 0;
 
@@ -1089,7 +1096,7 @@ const GalleryComponent = <T extends any>(
             />
           );
         })}
-      </Animated.View>
+      </AnimatedView>
     </GestureHandlerRootView>
   );
 };
